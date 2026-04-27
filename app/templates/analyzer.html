@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Analyzer — ResumeMatch{% endblock %}
+
+{% block content %}
+<div class="analyzer-page">
+
+  <div class="page-header">
+    <h1>Resume Analyzer</h1>
+    <p>Upload your resume and paste the job description to get your keyword match analysis.</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div class="alert alert-error" id="error-alert" role="alert" aria-live="polite">
+    <span aria-hidden="true">⚠️</span>
+    <span id="error-message">An error occurred.</span>
+  </div>
+
+  <form id="analyzer-form" novalidate>
+
+    <!-- ===== Resume Upload ===== -->
+    <div class="form-group">
+      <label class="form-label" for="resume-input">
+        Resume File <span aria-hidden="true">*</span>
+        <span style="font-weight:400;color:var(--gray-400);margin-left:0.5rem;">(PDF or DOCX, max 10 MB)</span>
+      </label>
+
+      <div class="upload-area" id="upload-area" role="button" tabindex="0"
+           aria-label="Upload resume file. Click or drag and drop a PDF or DOCX file.">
+        <input
+          type="file"
+          id="resume-input"
+          name="resume"
+          accept=".pdf,.docx"
+          aria-required="true"
+          aria-describedby="upload-hint"
+        />
+        <div class="upload-icon" aria-hidden="true">📁</div>
+        <h3>Drag & drop your resume here</h3>
+        <p id="upload-hint">or click to browse — PDF or DOCX accepted</p>
+      </div>
+
+      <div class="file-selected" id="file-selected" aria-live="polite">
+        <span aria-hidden="true">✅</span>
+        <span id="file-name">No file selected</span>
+        <button type="button" id="remove-file" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--success);font-size:1rem;" aria-label="Remove selected file">✕</button>
+      </div>
+    </div>
+
+    <!-- ===== Job Description ===== -->
+    <div class="form-group">
+      <label class="form-label" for="job-description">
+        Job Description <span aria-hidden="true">*</span>
+      </label>
+      <textarea
+        id="job-description"
+        name="job_description"
+        class="form-control"
+        placeholder="Paste the full job description here — include required skills, responsibilities, and qualifications..."
+        aria-required="true"
+        aria-describedby="jd-hint"
+        rows="8"
+      ></textarea>
+      <p id="jd-hint" style="font-size:0.8rem;color:var(--gray-400);margin-top:0.4rem;">
+        Tip: Include the complete job posting for the most accurate analysis.
+      </p>
+    </div>
+
+    <!-- ===== Submit ===== -->
+    <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" style="width:100%;">
+      <span id="btn-text">🔍 Analyze Resume</span>
+    </button>
+
+  </form>
+
+  <!-- ===== Loading State ===== -->
+  <div class="spinner-wrap" id="spinner" aria-live="polite" aria-label="Analyzing your resume, please wait">
+    <div class="spinner" aria-hidden="true"></div>
+    <p style="color:var(--gray-600);font-weight:500;">Analyzing your resume…</p>
+    <p style="font-size:0.85rem;color:var(--gray-400);">Extracting text and matching keywords</p>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const form        = document.getElementById('analyzer-form');
+  const fileInput   = document.getElementById('resume-input');
+  const uploadArea  = document.getElementById('upload-area');
+  const fileSelected = document.getElementById('file-selected');
+  const fileName    = document.getElementById('file-name');
+  const removeBtn   = document.getElementById('remove-file');
+  const submitBtn   = document.getElementById('submit-btn');
+  const btnText     = document.getElementById('btn-text');
+  const spinner     = document.getElementById('spinner');
+  const errorAlert  = document.getElementById('error-alert');
+  const errorMsg    = document.getElementById('error-message');
+
+  // ---- Drag & Drop ----
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+  });
+
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) setFile(file);
+  });
+
+  uploadArea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') fileInput.click();
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) setFile(fileInput.files[0]);
+  });
+
+  function setFile(file) {
+    // Validate extension
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['pdf', 'docx'].includes(ext)) {
+      showError('Only PDF and DOCX files are supported.');
+      return;
+    }
+    // Validate size (10 MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showError('File size exceeds the 10 MB limit.');
+      return;
+    }
+    hideError();
+    // Update the file input's files list via DataTransfer
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+
+    fileName.textContent = file.name;
+    fileSelected.classList.add('visible');
+  }
+
+  removeBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    fileSelected.classList.remove('visible');
+    fileName.textContent = 'No file selected';
+  });
+
+  // ---- Form Submit ----
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const file = fileInput.files[0];
+    const jd   = document.getElementById('job-description').value.trim();
+
+    if (!file) { showError('Please upload a resume file.'); return; }
+    if (!jd)   { showError('Please paste a job description.'); return; }
+
+    // Show loading state
+    form.style.display = 'none';
+    spinner.classList.add('visible');
+
+    const formData = new FormData();
+    formData.append('resume', file);
+    formData.append('job_description', jd);
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Analysis failed. Please try again.');
+      }
+
+      // Store results and redirect
+      sessionStorage.setItem('analysisResult', JSON.stringify(data));
+      window.location.href = '/results';
+
+    } catch (err) {
+      spinner.classList.remove('visible');
+      form.style.display = 'block';
+      showError(err.message || 'An unexpected error occurred.');
+    }
+  });
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorAlert.classList.add('visible');
+    errorAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideError() {
+    errorAlert.classList.remove('visible');
+  }
+</script>
+{% endblock %}

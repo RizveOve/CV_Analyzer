@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}ResumeMatch — Resume Keyword Analyzer{% endblock %}
+
+{% block content %}
+
+<!-- ===== Hero ===== -->
+<section class="hero" aria-labelledby="hero-heading">
+  <h1 id="hero-heading">
+    Land Your Dream Job<br />
+    <span style="opacity:0.85;">with the Right Keywords</span>
+  </h1>
+  <p>
+    Upload your resume, paste a job description, and instantly see your match score,
+    missing skills, and exactly what to improve.
+  </p>
+  <div class="hero-actions">
+    <a href="/analyzer" class="btn btn-white btn-lg">
+      🚀 Analyze My Resume
+    </a>
+    <a href="#how-it-works" class="btn btn-ghost btn-lg">
+      How It Works
+    </a>
+  </div>
+</section>
+
+<!-- ===== Features ===== -->
+<section class="features" aria-labelledby="features-heading">
+  <h2 id="features-heading">Everything You Need to Stand Out</h2>
+  <p class="features-subtitle">Powered by intelligent keyword matching and NLP-based text extraction.</p>
+
+  <div class="features-grid">
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#eff6ff;" aria-hidden="true">📊</div>
+      <h3>Match Score</h3>
+      <p>Get an instant percentage score showing how well your resume aligns with the job description.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#f0fdf4;" aria-hidden="true">✅</div>
+      <h3>Found Skills</h3>
+      <p>See exactly which required skills are already present in your resume — highlighted clearly.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#fef2f2;" aria-hidden="true">🔍</div>
+      <h3>Missing Keywords</h3>
+      <p>Identify the critical keywords the recruiter is looking for that are absent from your resume.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#fffbeb;" aria-hidden="true">💡</div>
+      <h3>Smart Suggestions</h3>
+      <p>Receive actionable, tailored advice on how to improve your resume for each missing skill.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#ecfeff;" aria-hidden="true">📄</div>
+      <h3>PDF & DOCX Support</h3>
+      <p>Upload your resume in any common format — PDF or Word document — and we handle the rest.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#f5f3ff;" aria-hidden="true">⚡</div>
+      <h3>Instant Results</h3>
+      <p>Analysis completes in seconds. No sign-up required. Your data stays private.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== How It Works ===== -->
+<section class="how-it-works" id="how-it-works" aria-labelledby="hiw-heading">
+  <div class="how-it-works-inner">
+    <h2 id="hiw-heading">How It Works</h2>
+    <p style="color:var(--gray-600);margin-top:0.5rem;">Three simple steps to a stronger resume.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number" aria-hidden="true">1</div>
+        <h3>Upload Your Resume</h3>
+        <p>Drag and drop or browse to upload your resume as a PDF or DOCX file.</p>
+      </div>
+      <div class="step">
+        <div class="step-number" aria-hidden="true">2</div>
+        <h3>Paste Job Description</h3>
+        <p>Copy the full job description from any job board and paste it into the text area.</p>
+      </div>
+      <div class="step">
+        <div class="step-number" aria-hidden="true">3</div>
+        <h3>Get Your Analysis</h3>
+        <p>Receive your match score, skill gaps, and personalized improvement suggestions instantly.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:3rem;">
+      <a href="/analyzer" class="btn btn-primary btn-lg">Start Analyzing →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Tech Stack Banner ===== -->
+<section style="padding:3rem 2rem;text-align:center;background:#fff;border-top:1px solid var(--gray-200);">
+  <p style="font-size:0.8rem;font-weight:600;letter-spacing:0.1em;color:var(--gray-400);text-transform:uppercase;margin-bottom:1.5rem;">
+    Skills We Analyze
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;max-width:800px;margin:0 auto;">
+    {% for skill in ["Python","FastAPI","Flask","Django","SQL","PostgreSQL","Docker","Kubernetes","AWS","Azure","Git","Linux","React","Angular","CI/CD","Node.js","TypeScript","MongoDB","Redis","Terraform","Machine Learning","DevOps"] %}
+    <span class="tag tag-found">{{ skill }}</span>
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock %}

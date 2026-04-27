@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Results — ResumeMatch{% endblock %}
+
+{% block content %}
+<div class="results-page" id="results-page">
+
+  <!-- No data fallback -->
+  <div id="no-data" style="display:none;text-align:center;padding:4rem 2rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">📭</div>
+    <h2 style="color:var(--gray-700);margin-bottom:0.5rem;">No Results Found</h2>
+    <p style="color:var(--gray-400);margin-bottom:2rem;">It looks like you haven't run an analysis yet.</p>
+    <a href="/analyzer" class="btn btn-primary btn-lg">Go to Analyzer</a>
+  </div>
+
+  <!-- Results content (hidden until data loads) -->
+  <div id="results-content" style="display:none;">
+
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <h1>Analysis Results</h1>
+        <p id="resume-filename-display" style="color:var(--gray-400);font-size:0.875rem;margin-top:0.25rem;"></p>
+      </div>
+      <span id="score-badge-header" class="score-badge" style="font-size:0.9rem;padding:0.4rem 1rem;"></span>
+    </div>
+
+    <!-- ===== Score Card ===== -->
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-header">
+        <span aria-hidden="true">📊</span>
+        <h3>Match Score</h3>
+      </div>
+      <div class="card-body">
+        <div class="progress-wrap">
+          <div class="progress-header">
+            <span class="progress-label">Keyword Match</span>
+            <span class="progress-value" id="score-value">0%</span>
+          </div>
+          <div class="progress-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progress-bar-aria">
+            <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <p id="score-description" style="font-size:0.875rem;color:var(--gray-600);margin-top:0.75rem;"></p>
+      </div>
+    </div>
+
+    <!-- ===== Skills Grid ===== -->
+    <div class="results-grid">
+
+      <!-- Matched Keywords -->
+      <div class="card">
+        <div class="card-header" style="background:var(--success-light);">
+          <span aria-hidden="true">✅</span>
+          <h3 style="color:var(--success);">Matched Keywords</h3>
+          <span id="matched-count" style="margin-left:auto;font-size:0.8rem;font-weight:600;color:var(--success);"></span>
+        </div>
+        <div class="card-body">
+          <div class="tag-list" id="matched-tags">
+            <p style="color:var(--gray-400);font-size:0.875rem;">No matched keywords found.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missing Keywords -->
+      <div class="card">
+        <div class="card-header" style="background:var(--danger-light);">
+          <span aria-hidden="true">❌</span>
+          <h3 style="color:var(--danger);">Missing Keywords</h3>
+          <span id="missing-count" style="margin-left:auto;font-size:0.8rem;font-weight:600;color:var(--danger);"></span>
+        </div>
+        <div class="card-body">
+          <div class="tag-list" id="missing-tags">
+            <p style="color:var(--gray-400);font-size:0.875rem;">No missing keywords — great job!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Skills in Resume -->
+      <div class="card">
+        <div class="card-header">
+          <span aria-hidden="true">📄</span>
+          <h3>Skills Found in Resume</h3>
+          <span id="found-count" style="margin-left:auto;font-size:0.8rem;font-weight:600;color:var(--primary);"></span>
+        </div>
+        <div class="card-body">
+          <div class="tag-list" id="found-tags">
+            <p style="color:var(--gray-400);font-size:0.875rem;">No recognized skills detected.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Required Keywords -->
+      <div class="card">
+        <div class="card-header">
+          <span aria-hidden="true">📋</span>
+          <h3>Required by Job</h3>
+          <span id="required-count" style="margin-left:auto;font-size:0.8rem;font-weight:600;color:var(--gray-600);"></span>
+        </div>
+        <div class="card-body">
+          <div class="tag-list" id="required-tags">
+            <p style="color:var(--gray-400);font-size:0.875rem;">No specific tech skills detected in job description.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== Suggestions ===== -->
+    <div class="card" style="margin-top:1.5rem;" id="suggestions-card">
+      <div class="card-header" style="background:var(--warning-light);">
+        <span aria-hidden="true">💡</span>
+        <h3 style="color:var(--warning);">Improvement Suggestions</h3>
+      </div>
+      <div class="card-body">
+        <ul class="suggestion-list" id="suggestions-list" aria-label="Improvement suggestions"></ul>
+        <p id="no-suggestions" style="display:none;color:var(--gray-400);font-size:0.875rem;">
+          🎉 Your resume already covers all the required keywords!
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== Actions ===== -->
+    <div class="results-actions">
+      <a href="/analyzer" class="btn btn-primary">
+        🔄 Analyze Another Resume
+      </a>
+      <button class="btn btn-outline" id="copy-btn" onclick="copyResults()">
+        📋 Copy Summary
+      </button>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const COLOR_MAP = {
+    success: 'success',
+    info:    'info',
+    warning: 'warning',
+    danger:  'danger',
+  };
+
+  const SCORE_DESCRIPTIONS = {
+    success: 'Excellent! Your resume is a strong match for this role. Focus on tailoring your experience descriptions.',
+    info:    'Good match. A few more keywords could significantly boost your chances.',
+    warning: 'Partial match. Consider adding the missing skills through projects or certifications.',
+    danger:  'Low match. Your resume needs significant keyword optimization for this role.',
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const raw = sessionStorage.getItem('analysisResult');
+
+    if (!raw) {
+      document.getElementById('no-data').style.display = 'block';
+      return;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      document.getElementById('no-data').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('results-content').style.display = 'block';
+    renderResults(data);
+  });
+
+  function renderResults(data) {
+    const color = data.score_color;
+
+    // ---- Header ----
+    document.getElementById('resume-filename-display').textContent =
+      `Analyzed: ${data.resume_filename}`;
+
+    const badge = document.getElementById('score-badge-header');
+    badge.textContent = data.score_label;
+    badge.className = `score-badge badge-${color}`;
+
+    // ---- Score ----
+    const scoreEl = document.getElementById('score-value');
+    const bar     = document.getElementById('progress-bar');
+    const barAria = document.getElementById('progress-bar-aria');
+
+    scoreEl.textContent = `${data.match_score}%`;
+    barAria.setAttribute('aria-valuenow', data.match_score);
+    barAria.setAttribute('aria-label', `Match score: ${data.match_score}%`);
+
+    // Animate bar after paint
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        bar.style.width = `${data.match_score}%`;
+        bar.className = `progress-bar-fill ${color}`;
+      }, 100);
+    });
+
+    document.getElementById('score-description').textContent =
+      SCORE_DESCRIPTIONS[color] || '';
+
+    // ---- Matched ----
+    renderTags('matched-tags', data.matched_keywords, 'tag-matched', '✓');
+    document.getElementById('matched-count').textContent =
+      `${data.matched_keywords.length} skill${data.matched_keywords.length !== 1 ? 's' : ''}`;
+
+    // ---- Missing ----
+    renderTags('missing-tags', data.missing_keywords, 'tag-missing', '✗');
+    document.getElementById('missing-count').textContent =
+      `${data.missing_keywords.length} skill${data.missing_keywords.length !== 1 ? 's' : ''}`;
+
+    // ---- Found in resume ----
+    renderTags('found-tags', data.found_skills, 'tag-found', '');
+    document.getElementById('found-count').textContent =
+      `${data.found_skills.length} skill${data.found_skills.length !== 1 ? 's' : ''}`;
+
+    // ---- Required ----
+    renderRequiredTags(data.required_keywords, data.matched_keywords);
+    document.getElementById('required-count').textContent =
+      `${data.required_keywords.length} skill${data.required_keywords.length !== 1 ? 's' : ''}`;
+
+    // ---- Suggestions ----
+    const list = document.getElementById('suggestions-list');
+    const noSug = document.getElementById('no-suggestions');
+
+    if (data.suggestions.length === 0) {
+      list.style.display = 'none';
+      noSug.style.display = 'block';
+    } else {
+      data.suggestions.forEach(s => {
+        const li = document.createElement('li');
+        li.className = 'suggestion-item';
+        li.innerHTML = `<span class="suggestion-icon" aria-hidden="true">💡</span><span>${escapeHtml(s)}</span>`;
+        list.appendChild(li);
+      });
+    }
+  }
+
+  function renderTags(containerId, items, tagClass, prefix) {
+    const container = document.getElementById(containerId);
+    if (!items || items.length === 0) return;
+    container.innerHTML = '';
+    items.forEach(item => {
+      const span = document.createElement('span');
+      span.className = `tag ${tagClass}`;
+      span.textContent = (prefix ? prefix + ' ' : '') + capitalize(item);
+      container.appendChild(span);
+    });
+  }
+
+  function renderRequiredTags(required, matched) {
+    const container = document.getElementById('required-tags');
+    if (!required || required.length === 0) return;
+    container.innerHTML = '';
+    const matchedSet = new Set(matched);
+    required.forEach(item => {
+      const span = document.createElement('span');
+      span.className = `tag ${matchedSet.has(item) ? 'tag-matched' : 'tag-missing'}`;
+      span.textContent = capitalize(item);
+      container.appendChild(span);
+    });
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  function copyResults() {
+    const raw = sessionStorage.getItem('analysisResult');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    const text = [
+      `Resume Keyword Analysis — ${d.resume_filename}`,
+      `Match Score: ${d.match_score}% (${d.score_label})`,
+      ``,
+      `Matched Keywords (${d.matched_keywords.length}): ${d.matched_keywords.join(', ') || 'None'}`,
+      `Missing Keywords (${d.missing_keywords.length}): ${d.missing_keywords.join(', ') || 'None'}`,
+      ``,
+      `Suggestions:`,
+      ...d.suggestions.map((s, i) => `${i + 1}. ${s}`),
+    ].join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy Summary'; }, 2000);
+    });
+  }
+</script>
+{% endblock %}

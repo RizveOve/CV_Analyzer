@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Resume Keyword Analyzer{% endblock %}</title>
+  <meta name="description" content="Analyze your resume against any job description. Get a match score, found skills, missing keywords, and improvement suggestions." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- ===== Navbar ===== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a href="/" class="navbar-brand" aria-label="Resume Keyword Analyzer home">
+      <div class="brand-icon" aria-hidden="true">📄</div>
+      ResumeMatch
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="/" id="nav-home">Home</a></li>
+      <li><a href="/analyzer" id="nav-analyzer">Analyzer</a></li>
+      <li>
+        <a href="/analyzer" class="btn btn-primary" style="padding:0.4rem 1rem;font-size:0.85rem;">
+          Try Free
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ===== Page Content ===== -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer>
+    <p>
+      Built with <strong>FastAPI</strong> · <strong>pdfplumber</strong> · <strong>python-docx</strong>
+      &nbsp;|&nbsp; Resume Keyword Analyzer &copy; 2026
+    </p>
+  </footer>
+
+  <script>
+    // Highlight active nav link
+    (function () {
+      const path = window.location.pathname;
+      if (path === '/') document.getElementById('nav-home')?.classList.add('active');
+      else if (path.startsWith('/analyzer')) document.getElementById('nav-analyzer')?.classList.add('active');
+    })();
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
